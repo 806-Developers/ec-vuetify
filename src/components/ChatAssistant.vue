@@ -58,32 +58,64 @@
                         :class="{ 'message-me-content': message.sender === 'me', 'message-other-content': message.sender !== 'me' }">
                         {{ message.content }}</div>
                 </div>
+
+                <v-card class="mx-auto" color="#fff" style="padding: 8px; border-radius: 9px; width: 80%; margin-top: 16px; margin-bottom: 16px" max-width="600">
+                    <template v-slot:prepend>
+                        <v-icon :color="checking ? 'red lighten-2' : 'indigo'" class="me-8" icon="mdi-water"
+                            size="64" @click="getDataBoardData"></v-icon>
+                    </template>
+
+                    <template v-slot:title>
+                        <div class="text-caption text-grey text-uppercase">
+                            血压
+                        </div>
+
+                        <span class="text-h4 font-weight-black" v-text="dataAvg || '—'"></span>
+                        <strong v-if="dataAvg">mmHg</strong>
+                    </template>
+
+                    <template v-slot:append>
+                        <v-btn class="align-self-start" icon="mdi-arrow-right-thick" size="34" variant="text"></v-btn>
+                    </template>
+
+                    <template v-slot:label="item">
+                        ${{ item.value }}
+                    </template>
+
+                    <v-sheet color="transparent">
+                        <v-sparkline :key="String(avg)" :gradient="['#00E676', '#ffffff']" :fill="true" :line-width="3"
+                            :model-value="dataChartList" :smooth="16" stroke-linecap="round" auto-draw></v-sparkline>
+                    </v-sheet>
+                </v-card>
             </div>
 
             <div class="recording-indicator" v-show="showRecordingIndicator">
-                <div>{{ Math.floor(recordingTime / 60) }}:{{ (recordingTime % 60 < 10 ? '0' : '') + recordingTime % 60 }}</div>
-                <div style="margin-top: 10px;">正在录音</div>
-            </div>
-
-            <div style="display: flex; align-items: center; justify-content: center;">
-                <div v-if="inputMode!=='text'" @touchstart="startRecording" @touchend="stopRecording" class="voice-card">
-                    <v-icon>mdi-microphone</v-icon>
-                    <span>按 住 说 话</span>
+                <div>{{ Math.floor(recordingTime / 60) }}:{{ (recordingTime % 60 < 10 ? '0' : '') + recordingTime % 60
+                        }}</div>
+                        <div style="margin-top: 10px;">正在录音</div>
                 </div>
 
-                <div  v-if="inputMode==='text'" class="word-input" style="margin-bottom: 16px;">
-                    <input  type="text" class="search__input" placeholder="请输入" v-model="newMessage">
-                </div>
+                <div style="display: flex; align-items: center; justify-content: center;">
+                    <div v-if="inputMode !== 'text'" @touchstart="startRecording" @touchend="stopRecording"
+                        class="voice-card">
+                        <v-icon>mdi-microphone</v-icon>
+                        <span>按 住 说 话</span>
+                    </div>
 
-                <div @click="sendMessage" class="send-btn"  v-if="inputMode==='text'" style="margin-bottom: 16px; margin-left: 16px">
-                    发送
-                </div>
+                    <div v-if="inputMode === 'text'" class="word-input" style="margin-bottom: 16px;">
+                        <input type="text" class="search__input" placeholder="请输入" v-model="newMessage">
+                    </div>
 
-                <div @click="toggleInputMode" class="send-btn" style="margin-bottom: 16px; margin-left: 16px">
-                    <v-icon v-if="inputMode!=='text'">mdi-draw</v-icon>
-                    <v-icon v-if="inputMode==='text'">mdi-microphone</v-icon>
+                    <div @click="sendMessage" class="send-btn" v-if="inputMode === 'text'"
+                        style="margin-bottom: 16px; margin-left: 16px">
+                        发送
+                    </div>
+
+                    <div @click="toggleInputMode" class="send-btn" style="margin-bottom: 16px; margin-left: 16px">
+                        <v-icon v-if="inputMode !== 'text'">mdi-draw</v-icon>
+                        <v-icon v-if="inputMode === 'text'">mdi-microphone</v-icon>
+                    </div>
                 </div>
-            </div>
 
         </v-container>
     </v-app>
@@ -102,11 +134,19 @@ export default {
             ],
             newMessage: '',
             inputMode: 'voice',
+            chartData: {
+                dates: ['2024-03-01', '2024-03-02', '2024-03-03', '2024-03-04', '2024-03-05'],
+                systolic: [120, 125, 122, 128, 130],
+                diastolic: [80, 82, 78, 85, 86]
+            },
+            dataChartList: [],
+            dataAvg: "120/80",
+            checking: false,
         };
     },
     methods: {
         mounted() {
-
+            this.getDataBoardData();
         },
         async sendMessage() {
             if (this.newMessage.trim() !== '') {
@@ -174,12 +214,31 @@ export default {
             this.$nextTick(() => {
                 this.$refs.chatMessages.scrollTop = this.$refs.chatMessages.scrollHeight;
             });
-        }
+        },
+
+        randomBloodPressure() {
+            return Math.floor(Math.random() * 40) + 80
+        },
+        getDataBoardData() {
+            this.checking = true
+            this.dataChartList = Array.from({ length: 20 }, this.randomBloodPressure)
+            this.checking = false
+        },
+
     }
 };
 </script>
 
 <style>
+.card {
+    width: 400px;
+    margin: 20px;
+}
+
+.chart {
+    border-radius: 10px;
+}
+
 .v-container {
     padding: 0;
 }
@@ -391,5 +450,4 @@ export default {
     font-weight: 500;
     color: #999999;
 }
-
 </style>
